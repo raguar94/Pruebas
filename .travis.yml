@@ -1,1 +1,56 @@
-language: cpp
+language: python
+
+cache:
+  pip: true
+  directories:
+    - build
+
+sudo: required
+dist: trusty
+
+group: edge
+
+python:
+  - "2.7"
+
+rust:
+  - nightly
+
+go:
+  - "1.7"
+
+before_install:
+  - sudo add-apt-repository ppa:webupd8team/atom -y
+  - sudo apt-get update -qq
+  - go get github.com/golang/lint/golint
+  - pip install pre-commit gitinspector
+
+install:
+  - sudo apt-get install simhash tree pylint splint gitstats aspell aspell-es aptitude checkstyle cppcheck -qq
+  - sudo apt-get -y install hlint atom  -qq
+  - sudo aptitude install shellcheck
+  - sudo apm install linter-eastwood
+  - curl -sSf https://static.rust-lang.org/rustup.sh | sh
+  - gem install cucumber ruby-lint
+  - pip install scons requests flake8 https://github.com/google/closure-linter/zipball/master
+
+jobs:
+  include:
+    - stage: Precommit
+      install: skip
+      script:
+        - ./precommit.sh
+        - ./url.sh
+        - ./nodata.sh
+    - stage: SCons build
+      script:
+        - scons -j 4 folders -Q
+        - scons gherkin -Q
+        - scons others -Q
+
+addons:
+  artifacts:
+    debug: false
+    bucket: travisatfluid
+    paths:
+- ./build
